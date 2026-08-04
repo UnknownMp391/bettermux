@@ -7,7 +7,7 @@ import (
 )
 
 func TestBetterMux_HandleRouteWithMiddleware(t *testing.T) {
-	root := New()
+	root := NewBetterMux()
 
 	root.HandleFunc("/ping", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -21,7 +21,7 @@ func TestBetterMux_HandleRouteWithMiddleware(t *testing.T) {
 		})
 	})
 
-	withMw.Route("/api/", func(api BetterMux) {
+	withMw.Route("/api/", func(api *BetterMux) {
 		api.HandleFunc("/hello", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("api hello"))
@@ -33,7 +33,7 @@ func TestBetterMux_HandleRouteWithMiddleware(t *testing.T) {
 		})
 	})
 
-	withMw.Route("/admin", func(admin BetterMux) {
+	withMw.Route("/admin", func(admin *BetterMux) {
 		admin.HandleFunc("/dashboard", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("admin dashboard"))
@@ -76,7 +76,7 @@ func TestBetterMux_HandleRouteWithMiddleware(t *testing.T) {
 }
 
 func TestBetterMux_MethodHelpersAndRouteTemplateCompatibility(t *testing.T) {
-	root := New()
+	root := NewBetterMux()
 
 	withMw := root.With(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +85,7 @@ func TestBetterMux_MethodHelpersAndRouteTemplateCompatibility(t *testing.T) {
 		})
 	})
 
-	withMw.Route("/api/", func(api BetterMux) {
+	withMw.Route("/api/", func(api *BetterMux) {
 		api.Get("/users/{id}", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("get user"))

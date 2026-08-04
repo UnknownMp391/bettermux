@@ -11,58 +11,58 @@ type BetterMux struct {
 	Middleware func(http.Handler) http.Handler
 }
 
-func New() BetterMux {
-	return BetterMux{
+func NewBetterMux() *BetterMux {
+	return &BetterMux{
 		RealMux: http.NewServeMux(),
 	}
 }
 
-func NewWithMux(mux *http.ServeMux) BetterMux {
+func NewBetterMuxWithServeMux(mux *http.ServeMux) *BetterMux {
 	if mux == nil {
 		mux = http.NewServeMux()
 	}
-	return BetterMux{
+	return &BetterMux{
 		RealMux: mux,
 	}
 }
 
-func (mux BetterMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (mux *BetterMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux.RealMux.ServeHTTP(w, r)
 }
 
-func (mux BetterMux) Handle(pattern string, handler http.Handler) {
+func (mux *BetterMux) Handle(pattern string, handler http.Handler) {
 	mux.RealMux.Handle(pattern, mux.applyMiddlewareChain(handler))
 }
 
-func (mux BetterMux) HandleFunc(pattern string, fn http.HandlerFunc) {
+func (mux *BetterMux) HandleFunc(pattern string, fn http.HandlerFunc) {
 	mux.Handle(pattern, fn)
 }
 
-func (mux BetterMux) Get(pattern string, handler http.HandlerFunc) {
+func (mux *BetterMux) Get(pattern string, handler http.HandlerFunc) {
 	mux.Handle("GET "+pattern, handler)
 }
 
-func (mux BetterMux) Post(pattern string, handler http.HandlerFunc) {
+func (mux *BetterMux) Post(pattern string, handler http.HandlerFunc) {
 	mux.Handle("POST "+pattern, handler)
 }
 
-func (mux BetterMux) Put(pattern string, handler http.HandlerFunc) {
+func (mux *BetterMux) Put(pattern string, handler http.HandlerFunc) {
 	mux.Handle("PUT "+pattern, handler)
 }
 
-func (mux BetterMux) Delete(pattern string, handler http.HandlerFunc) {
+func (mux *BetterMux) Delete(pattern string, handler http.HandlerFunc) {
 	mux.Handle("DELETE "+pattern, handler)
 }
 
-func (mux BetterMux) Patch(pattern string, handler http.HandlerFunc) {
+func (mux *BetterMux) Patch(pattern string, handler http.HandlerFunc) {
 	mux.Handle("PATCH "+pattern, handler)
 }
 
-func (mux BetterMux) Options(pattern string, handler http.HandlerFunc) {
+func (mux *BetterMux) Options(pattern string, handler http.HandlerFunc) {
 	mux.Handle("OPTIONS "+pattern, handler)
 }
 
-func (mux BetterMux) Route(path string, fn func(BetterMux)) BetterMux {
+func (mux *BetterMux) Route(path string, fn func(*BetterMux)) *BetterMux {
 	var stripPath string
 	var routePath string
 	if before, ok := strings.CutSuffix(path, "/"); ok {
@@ -74,7 +74,7 @@ func (mux BetterMux) Route(path string, fn func(BetterMux)) BetterMux {
 	}
 
 	childRealMux := http.NewServeMux()
-	childMux := BetterMux{
+	childMux := &BetterMux{
 		RealMux: childRealMux,
 	}
 
@@ -87,17 +87,17 @@ func (mux BetterMux) Route(path string, fn func(BetterMux)) BetterMux {
 	return childMux
 }
 
-func (mux BetterMux) With(mfn func(http.Handler) http.Handler) BetterMux {
-	return BetterMux{
+func (mux *BetterMux) With(mfn func(http.Handler) http.Handler) *BetterMux {
+	return &BetterMux{
 		RealMux:    mux.RealMux,
-		ParentMux:  &mux,
+		ParentMux:  mux,
 		Middleware: mfn,
 	}
 }
 
-func (mux BetterMux) applyMiddlewareChain(handler http.Handler) http.Handler {
+func (mux *BetterMux) applyMiddlewareChain(handler http.Handler) http.Handler {
 	h := handler
-	cur := &mux
+	cur := mux
 	for cur != nil {
 		if cur.Middleware != nil {
 			h = cur.Middleware(h)
