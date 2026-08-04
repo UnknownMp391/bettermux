@@ -6,14 +6,14 @@ import (
 )
 
 type BetterMux struct {
-	realMux    *http.ServeMux
-	parentMux  *BetterMux
-	middleware func(http.Handler) http.Handler
+	RealMux    *http.ServeMux
+	ParentMux  *BetterMux
+	Middleware func(http.Handler) http.Handler
 }
 
 func New() BetterMux {
 	return BetterMux{
-		realMux: http.NewServeMux(),
+		RealMux: http.NewServeMux(),
 	}
 }
 
@@ -22,16 +22,16 @@ func NewWithMux(mux *http.ServeMux) BetterMux {
 		mux = http.NewServeMux()
 	}
 	return BetterMux{
-		realMux: mux,
+		RealMux: mux,
 	}
 }
 
 func (mux BetterMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	mux.realMux.ServeHTTP(w, r)
+	mux.RealMux.ServeHTTP(w, r)
 }
 
 func (mux BetterMux) Handle(pattern string, handler http.Handler) {
-	mux.realMux.Handle(pattern, mux.applyMiddlewareChain(handler))
+	mux.RealMux.Handle(pattern, mux.applyMiddlewareChain(handler))
 }
 
 func (mux BetterMux) HandleFunc(pattern string, fn http.HandlerFunc) {
@@ -75,7 +75,7 @@ func (mux BetterMux) Route(path string, fn func(BetterMux)) BetterMux {
 
 	childRealMux := http.NewServeMux()
 	childMux := BetterMux{
-		realMux: childRealMux,
+		RealMux: childRealMux,
 	}
 
 	if fn != nil {
@@ -89,9 +89,9 @@ func (mux BetterMux) Route(path string, fn func(BetterMux)) BetterMux {
 
 func (mux BetterMux) With(mfn func(http.Handler) http.Handler) BetterMux {
 	return BetterMux{
-		realMux:    mux.realMux,
-		parentMux:  &mux,
-		middleware: mfn,
+		RealMux:    mux.RealMux,
+		ParentMux:  &mux,
+		Middleware: mfn,
 	}
 }
 
@@ -99,10 +99,10 @@ func (mux BetterMux) applyMiddlewareChain(handler http.Handler) http.Handler {
 	h := handler
 	cur := &mux
 	for cur != nil {
-		if cur.middleware != nil {
-			h = cur.middleware(h)
+		if cur.Middleware != nil {
+			h = cur.Middleware(h)
 		}
-		cur = cur.parentMux
+		cur = cur.ParentMux
 	}
 	return h
 }
