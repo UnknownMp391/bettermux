@@ -62,9 +62,10 @@ func (mux *BetterMux) Options(pattern string, handler http.HandlerFunc) {
 	mux.Handle("OPTIONS "+pattern, handler)
 }
 
-func (mux *BetterMux) Route(path string, fn func(*BetterMux)) *BetterMux {
+func (mux *BetterMux) Mount(path string, handler http.Handler) {
 	var stripPath string
 	var routePath string
+
 	if before, ok := strings.CutSuffix(path, "/"); ok {
 		stripPath = before
 		routePath = path
@@ -72,6 +73,11 @@ func (mux *BetterMux) Route(path string, fn func(*BetterMux)) *BetterMux {
 		stripPath = path
 		routePath = path + "/"
 	}
+
+	mux.Handle(routePath, http.StripPrefix(stripPath, handler))
+}
+
+func (mux *BetterMux) Route(path string, fn func(*BetterMux)) *BetterMux {
 
 	childRealMux := http.NewServeMux()
 	childMux := &BetterMux{
@@ -82,7 +88,7 @@ func (mux *BetterMux) Route(path string, fn func(*BetterMux)) *BetterMux {
 		fn(childMux)
 	}
 
-	mux.Handle(routePath, http.StripPrefix(stripPath, childRealMux))
+	mux.Mount(path, childMux)
 
 	return childMux
 }
