@@ -1,3 +1,3 @@
 module github.com/UnknownMp391/bettermux
 
-go 1.26.5
+go 1.22
